@@ -7,11 +7,11 @@ import time
 
 ######API CALLS
 
-class binance_api:
+class bitrue_api:
 	def __init__(self, key, secret):
 		self.key = key
 		self.secret = secret.encode("utf-8")
-		self.baseURL = "https://api.binance.com"
+		self.baseURL = "https://www.bitrue.com"
 		self.pingURL = "/api/v1/ping"
 		self.timeURL = "/api/v1/time"
 		self.bookURL = "/api/v1/depth"
@@ -20,15 +20,15 @@ class binance_api:
 		self.rangeTradeURL = "/api/v1/aggTrades"
 		self.candlestickURL = "/api/v1/klines"
 		self.dayURL="/api/v1/ticker/24hr"
-		self.priceURL = "/api/v3/ticker/price"
-		self.bookTickerURL="/api/v3/ticker/bookTicker"
-		self.testNewOrderURL = "/api/v3/order/test"
-		self.orderURL="/api/v3/order"
-		self.openOrdersURL="/api/v3/openOrders"
-		self.allOrdersURL="/api/v3/allOrders"
-		self.accountInfoURL="/api/v3/account"
-		self.accountTradesURL="/api/v3/myTrades"
-		self.withdrawURL="/wapi/v3/withdraw.html"
+		self.priceURL = "/api/v1/ticker/price"
+		self.bookTickerURL="/api/v1/ticker/bookTicker"
+		self.testNewOrderURL = "/api/v1/order/test"
+		self.orderURL="/api/v1/order"
+		self.openOrdersURL="/api/v1/openOrders"
+		self.allOrdersURL="/api/v1/allOrders"
+		self.accountInfoURL="/api/v1/account"
+		self.accountTradesURL="/api/v1/myTrades"
+		self.withdrawURL="/api/v1/withdraw"
 
 	def getSignature(self, message):
 		#returns a signature
@@ -44,7 +44,7 @@ class binance_api:
 			return False 
 
 	def getTimestamp(self):
-		#returns timestamp of binance servers
+		#returns timestamp of bitrue servers
 		r = requests.get(f"{self.baseURL}{self.timeURL}").json()
 		return r.get('serverTime')
 
@@ -267,7 +267,8 @@ class binance_api:
 			message+="&network={}".format(network)			
 		signature = self.getSignature(message.encode('utf-8'))
 		params['signature']=signature
-		return requests.post(f"{self.baseURL}{self.withdrawURL}", headers={"X-MBX-APIKEY":self.key}, params=params).json()
+		r = requests.post(f"{self.baseURL}{self.withdrawURL}", headers={"X-MBX-APIKEY":self.key}, params=params)
+		return r.json()
 
 	##Exchange class functions
 
@@ -284,15 +285,10 @@ class binance_api:
 		return self.newOrder(market, "SELL", "LIMIT", amount, price=price)
 
 	def get_balance(self, currency):
-		return [x["free"] for x in self.getAccountInfo()['balances'] if x["asset"] == currency][0]
+		return [x["free"] for x in self.getAccountInfo()['balances'] if x["asset"] == currency.lower()][0]
 
 	def send_tx(self, currency, quantity, address, memo):
 		return self.withdraw(currency, address, quantity, memo=memo)
 
 	def order_complete(self, orderId, market):
 		return self.getOrderStatus(market, orderId=orderId)
-
-	
-
-b = binance_api(os.environ["BINANCE_KEY"], os.environ["BINANCE_SECRET"])
-print(b.get_balance("XRP"))

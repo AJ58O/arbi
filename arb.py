@@ -143,6 +143,7 @@ class arbitrage:
 	def execute(self):
 		sell = self.sell_exchange.sell(self.sell_pair, self.suggested_sell_amount, self.sell_price)
 		buy = self.buy_exchange.buy(self.buy_pair, self.suggested_buy_amount, self.buy_price)
+		#SET TRADE IDs HERE
 
 	def rebalance(self):
 		curs = self.pair1.split("-")
@@ -179,3 +180,12 @@ class arbitrage:
 		if max(sellbal1, buybal1) < max(self.sellbal1, self.buybal1) and max(sellbal2, buybal2) < max(self.sellbal2, self.buybal2):
 			return True
 		return False
+
+	def execution_complete(self):
+		sell_trade_complete = sell_exchange.order_complete(self.sell_order_id)
+		buy_trade_complete = buy_exchange.order_complete(self.buy_order_id)
+		if sell_trade_complete is True and buy_trade_complete is True:
+			return True
+		else:
+			return False
+
