@@ -175,6 +175,9 @@ class Bittrex:
 		}
 		r = requests.get(url, headers=headers)
 		return r.json()
+
+	def order_complete(self, market, orderId):
+		return self.get_order(orderId)
 		
 # b = Bittrex(os.environ["BITTREX_SECRET"], os.environ["BITTREX_KEY"])
 # print(json.dumps(b.get_balance("XRP")))

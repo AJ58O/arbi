@@ -290,6 +290,5 @@ class bitrue_api:
 	def send_tx(self, currency, quantity, address, memo):
 		return self.withdraw(currency, address, quantity, memo=memo)
 
-b = bitrue_api(os.environ["BITRUE_KEY"], os.environ["BITRUE_SECRET"])
-print(b.send_tx("XRP", .0001, "1234", "324"))
-
+	def order_complete(self, orderId, market):
+		return self.getOrderStatus(market, orderId=orderId)

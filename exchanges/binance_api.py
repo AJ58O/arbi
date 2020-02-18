@@ -289,5 +289,10 @@ class binance_api:
 	def send_tx(self, currency, quantity, address, memo):
 		return self.withdraw(currency, address, quantity, memo=memo)
 
+	def order_complete(self, orderId, market):
+		return self.getOrderStatus(market, orderId=orderId)
+
+	
+
 b = binance_api(os.environ["BINANCE_KEY"], os.environ["BINANCE_SECRET"])
 print(b.get_balance("XRP"))

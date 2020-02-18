@@ -226,6 +226,9 @@ class CB:
 		# print(r.status_code)
 		return r.json()
 
+	def order_complete(self, orderId, market):
+		return self.get_order(orderId)
+
 # secret, key, passphrase = os.environ["CB_SECRET"], os.environ["CB_KEY"], os.environ["CB_PASSPHRASE"]
 # c = CB(secret, key, passphrase)
 # print(json.dumps(c.get_balance("XRP")))

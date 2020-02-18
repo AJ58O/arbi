@@ -28,3 +28,6 @@ class Exchange:
 	def get_balance(self, currency):
 		return self.e.get_balance(currency)
 
+	def order_complete(self, orderId, market):
+		return self.e.order_complete(orderId, market)
+
