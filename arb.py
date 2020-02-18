@@ -18,7 +18,9 @@ class arbitrage:
 		self.price1=price1
 		self.price2=price2
 		if threshhold==None:
-			threshhold=.01
+			self.threshhold=.01
+		else:
+			self.threshhold = threshhold
 		if run_op == True:
 			self.get_opportunity()
 
