@@ -1,4 +1,10 @@
+from exchanges import bittrex_api
+from exchanges import coinbase_api
+from exchanges.exchange_class import Exchange
 from arb import arbitrage
+import os
+import random
+import time
 
 
 
@@ -10,9 +16,7 @@ def main():
 	pair1="BTC-XRP"
 	pair2="XRP-BTC"
 	amountList = [50, 100, 300, 1000]
-	amount1=50
-	amount2=300
-	threshold = .012
+	threshhold = .01
 
 	#init headers
 	with open("log.txt", "a") as text_file:
@@ -30,11 +34,11 @@ def main():
 
 		if sell_exchange_name != exchange2.name:
 			a = arbitrage(exchange2, exchange1, pair2, pair1, amount2, amount1, threshhold=threshhold, run_op=True)
-			if a.do_trade == True:
-				a.execute()
-				a.rebalance()
-				while a.rebalance_complete() is not True:
-					time.sleep(5)
+		# if a.do_trade == True:
+		# 	a.execute()
+		# 	a.rebalance()
+		# 	while a.rebalance_complete() is not True:
+		# 		time.sleep(5)
 
 		# 500 * x = margin
 
