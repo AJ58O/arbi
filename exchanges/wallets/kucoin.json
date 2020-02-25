@@ -1,0 +1,16 @@
+{
+	"XRP":{
+		"address":"rUW9toSjQkLY6EspdnBJP2paG4hWKmNbMh",
+		"memo":"1863985286"
+	},
+	"USDT":{
+		"address":"0x5bd5fe521d6f251778531328eee4d52332c66171",
+		"TRC20":"TVUZKc6pMRfmhbt6jru7goNeKUoM2qzGFm",
+		"networks":[
+			"TRC20",
+			"ERC20",
+			"OMNI",
+			"EOS"
+		]
+	}
+}

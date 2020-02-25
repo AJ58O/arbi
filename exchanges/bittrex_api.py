@@ -5,7 +5,7 @@ import json
 import time
 import os
 
-class Bittrex:
+class bittrex_api:
 	def __init__(self, secret, key):
 		self.secret=secret.encode()
 		self.key=key
@@ -26,6 +26,10 @@ class Bittrex:
 			ps="{0}{1}{2}={3}".format(ps,symbol, key,params[str(key)])
 			# print(ps)
 		return ps
+
+	def normalize_pair(self, pair):
+		curs = pair.split("-")
+		return f"{curs[1]}-{curs[0]}"
 
 
 	def get_order_book(self, market, order_type):
@@ -48,25 +52,26 @@ class Bittrex:
 	def get_buy_price(self, market):
 		# print(market)
 		try:
-			return self.get_order_book(market, "buy")["result"][0]["Rate"]
+			return self.get_order_book(self.normalize_pair(market), "buy")["result"][0]["Rate"]
 		except:
-			return self.get_order_book(market, "buy")
+			return self.get_order_book(self.normalize_pair(market), "buy")
 
 	def get_sell_price(self, market):
 		try:
-			return self.get_order_book(market, "sell")["result"][0]["Rate"]
+			return self.get_order_book(self.normalize_pair(market), "sell")["result"][0]["Rate"]
 		except:
-			return self.get_order_book(market, "sell")
+			return self.get_order_book(self.normalize_pair(market), "sell")
 
 	def send_tx(self, currency, quantity, address, paymentid=None):
 		params = {
 			"currency":currency,
 			"quantity":quantity,
-			"address":address,
-			"paymentid":paymentid,
+			"address":address,			
 			"nonce":str(time.time()).split(".")[0],
 			"apikey":self.key
 		}
+		if paymentid is not None:
+			params["paymentid"] = paymentid,
 		url = self.base + "/account/withdraw"+self.pathstring(params)
 		headers = {
 			"apisign":self.sign(url),
@@ -128,6 +133,8 @@ class Bittrex:
 			"Content-Type":"application/json"
 		}
 		r = requests.get(url, headers=headers)
+		if r.json()["result"]["Balance"] == None:
+			return "0"
 		return r.json()["result"]["Balance"]
 
 	def cancel(self, uuid):
@@ -146,9 +153,10 @@ class Bittrex:
 		
 	def sell(self, market, quantity, rate, order_type=None, addtl_params={}):
 		params = {
+			"market":self.normalize_pair(market),
 			"quantity":quantity,
 			"rate":rate,
-			"timeInForce":timeInForce,
+			"timeInForce":"GTC",
 			"nonce":str(time.time()).split(".")[0],
 			"apikey":self.key
 		}
@@ -157,14 +165,19 @@ class Bittrex:
 			"apisign":self.sign(url),
 			"Content-Type":"application/json"
 		}
-		r = requests.get(url, headers=headers)
-		return r.json()
+		r = requests.get(url, headers=headers).json()
+		try:
+			return r["result"]["uuid"]
+		except:
+			print("except")
+			return r
 
 	def buy(self, market, quantity, rate, order_type=None, addtl_params={}):
 		params = {
+			"market":self.normalize_pair(market),
 			"quantity":quantity,
 			"rate":rate,
-			"timeInForce":timeInForce,
+			"timeInForce":"GTC",
 			"nonce":str(time.time()).split(".")[0],
 			"apikey":self.key
 		}
@@ -174,10 +187,18 @@ class Bittrex:
 			"Content-Type":"application/json"
 		}
 		r = requests.get(url, headers=headers)
-		return r.json()
+		resp = r.json()
+		try:
+			return resp["result"]["uuid"]
+		except:
+			print("except")
+			return resp
 
 	def order_complete(self, market, orderId):
-		return self.get_order(orderId)
+		if int(self.get_order(orderId)["result"][0]["QuantityRemaining"]) == 0:
+			return True
+		return False
 		
-# b = Bittrex(os.environ["BITTREX_SECRET"], os.environ["BITTREX_KEY"])
-# print(json.dumps(b.get_balance("XRP")))
+# b = bittrex_api(os.environ["BITTREX_SECRET"], os.environ["BITTREX_KEY"])
+# print(b.buy("XRP-USDT", 10, .25))
+# print(b.sell("XRP-USDT", 10, .35))

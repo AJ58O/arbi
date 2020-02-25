@@ -8,7 +8,7 @@ from exchanges import cbauth
 # import cbauth
 import os
 
-class CB:
+class coinbase_api:
 	def __init__(self, secret, key, passphrase):
 		self.secret=secret
 		self.key=key
@@ -119,25 +119,25 @@ class CB:
 
 	def buy(self, market, amount, price, order_type=None, addtl_params={}):
 		if order_type==None:
-			return place_order('limit', "buy", market, price=price)
+			return place_order('limit', "buy", market, price=price)["id"]
 		elif order_type=="market":
-			return place_order(order_type, "buy", market)
+			return place_order(order_type, "buy", market)["id"]
 		elif order_type=="stop":
-			return place_order("limit", "buy", market, price=price, stop="entry", stop_price=addtl_params.get("stop_price"))
+			return place_order("limit", "buy", market, price=price, stop="entry", stop_price=addtl_params.get("stop_price"))["id"]
 		elif order_type == "stopmarket":
-			return place_order("market", "buy", market, price=price, stop="entry", stop_price=addtl_params.get("stop_price"))
+			return place_order("market", "buy", market, price=price, stop="entry", stop_price=addtl_params.get("stop_price"))["id"]
 		else:
 			return None
 
 	def sell(self, market, amount, price, order_type=None, addtl_params={}):
 		if order_type==None:
-			return place_order('limit', "sell", market, price=price)
+			return place_order('limit', "sell", market, price=price)["id"]
 		elif order_type=="market":
-			return place_order(order_type, "sell", market)
+			return place_order(order_type, "sell", market)["id"]
 		elif order_type=="stop":
-			return place_order("limit", "sell", market, price=price, stop="loss", stop_price=addtl_params.get("stop_price"))
+			return place_order("limit", "sell", market, price=price, stop="loss", stop_price=addtl_params.get("stop_price"))["id"]
 		elif order_type == "stopmarket":
-			return place_order("market", "sell", market, price=price, stop="loss", stop_price=addtl_params.get("stop_price"))
+			return place_order("market", "sell", market, price=price, stop="loss", stop_price=addtl_params.get("stop_price"))["id"]
 		else:
 			return None
 
@@ -227,10 +227,12 @@ class CB:
 		return r.json()
 
 	def order_complete(self, orderId, market):
-		return self.get_order(orderId)
+		if self.get_order(orderId) == "done":
+			return True
+		return False
 
 # secret, key, passphrase = os.environ["CB_SECRET"], os.environ["CB_KEY"], os.environ["CB_PASSPHRASE"]
-# c = CB(secret, key, passphrase)
+# c = coinbase_api(secret, key, passphrase)
 # print(json.dumps(c.get_balance("XRP")))
 
 

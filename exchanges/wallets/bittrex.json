@@ -1,6 +1,12 @@
 {
 	"XRP":{
-		"address":"1234",
-		"memo":"123"
+		"address":"rPVMhWBsfF9iMXYj3aAzJVkPDTFNSyWdKy",
+		"memo":"1851451336"
+	},
+	"USDT":{
+		"address":"0xba1c45ef7eda6e1e9b9c642fb227fd532d233380",
+		"networks":[
+			"ERC20"
+		]
 	}
 }

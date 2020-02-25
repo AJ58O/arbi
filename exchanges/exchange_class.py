@@ -11,10 +11,10 @@ class Exchange:
 			self.wallet = json.load(wallet_file)
 
 	def get_buy_price(self, market):
-		return self.e.get_buy_price(market)
+		return float(self.e.get_buy_price(market))
 
 	def get_sell_price(self, market):
-		return self.e.get_sell_price(market)
+		return float(self.e.get_sell_price(market))
 
 	def buy(self, market, amount, price, order_type=None, addtl_params={}):
 		return self.e.buy(market, amount, price, order_type=order_type, addtl_params=addtl_params)
@@ -22,11 +22,11 @@ class Exchange:
 	def sell(self, market, amount, price, order_type=None, addtl_params={}):
 		return self.e.sell(market, amount, price, order_type=order_type, addtl_params=addtl_params)
 
-	def send_tx(self, currency, quantity, address, memo):
+	def send_tx(self, currency, quantity, address, memo=None):
 		return self.e.send_tx(currency, quantity, address, memo)
 
 	def get_balance(self, currency):
-		return self.e.get_balance(currency)
+		return float(self.e.get_balance(currency))
 
 	def order_complete(self, orderId, market):
 		return self.e.order_complete(orderId, market)

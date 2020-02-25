@@ -8,7 +8,7 @@ import os
 import random
 
 class arbitrage:
-	def __init__(self, exchange1, exchange2, pair1, pair2, amount1, amount2, price1=None, price2=None, run_op=False, threshhold=None):
+	def __init__(self, exchange1, exchange2, pair1, pair2, amount1=None, amount2=None, price1=None, price2=None, run_op=False, threshhold=None, get_amounts=False):
 		self.exchange1=exchange1
 		self.exchange2=exchange2
 		self.pair1=pair1
@@ -21,8 +21,22 @@ class arbitrage:
 			self.threshhold=.01
 		else:
 			self.threshhold = threshhold
+		if get_amounts == True:
+			self.get_amounts()
 		if run_op == True:
 			self.get_opportunity()
+
+
+	def get_amounts(self):
+		curs = self.pair1.split("-")
+		self.cur1 = curs[0]
+		self.cur2 = curs[1]
+		self.ex1bal1 = self.exchange1.get_balance(self.cur1)
+		self.ex1bal2 = self.exchange1.get_balance(self.cur2)
+		self.ex2bal1 = self.exchange2.get_balance(self.cur1)
+		self.ex2bal2 = self.exchange2.get_balance(self.cur2)
+		self.amount1 = self.ex1bal2 * 100
+		self.amount2 = self.ex2bal1 * 100
 
 	def get_opportunity(self, r=None):
 		if self.price1 == None:
@@ -143,7 +157,15 @@ class arbitrage:
 	def execute(self):
 		sell = self.sell_exchange.sell(self.sell_pair, self.suggested_sell_amount, self.sell_price)
 		buy = self.buy_exchange.buy(self.buy_pair, self.suggested_buy_amount, self.buy_price)
+		self.sell_order_id = sell
+		self.buy_order_id = buy
+		print("SELL: {0}".format(sell))
+		print("BUY: {0}".format(buy))
+		with open("orders.txt", "a") as text_file:
+			text_file.write("{0},{1},{2}\n".format(datetime.datetime.now(), buy, sell))
 		#SET TRADE IDs HERE
+		return sell, buy
+		
 
 	def rebalance(self):
 		curs = self.pair1.split("-")
@@ -159,33 +181,36 @@ class arbitrage:
 
 		if self.cur1balamount > self.sellbal1:
 			amount = self.cur1balamount - self.sellbal1
-			buy_exchange.send_tx(self.cur1, amount, sell_exchange.wallet[self.cur1]["address"], sell_exchange.wallet[self.cur1]["memo"])
+			self.cur1wd = self.buy_exchange.send_tx(self.cur1, amount, sell_exchange.wallet[self.cur1]["address"], sell_exchange.wallet[self.cur1].get("memo"))
 		elif self.cur1balamount > self.buybal1:
 			amount = self.cur1balamount - self.buybal1
-			sell_exchange.send_tx(self.cur1, amount, buy_exchange.wallet[self.cur1]["address"], buy_exchange.wallet[self.cur1]["memo"])
+			self.cur1wd = self.sell_exchange.send_tx(self.cur1, amount, buy_exchange.wallet[self.cur1]["address"], buy_exchange.wallet[self.cur1].get("memo"))
 
 		if self.cur2balamount > self.sellbal2:
 			amount = self.cur2balamount - self.sellbal2
-			buy_exchange.send_tx(self.cur2, amount, sell_exchange.wallet[self.cur2]["address"], sell_exchange.wallet[self.cur2]["memo"])
+			self.cur2wd = self.buy_exchange.send_tx(self.cur2, amount, sell_exchange.wallet[self.cur2]["address"], sell_exchange.wallet[self.cur2].get("memo"))
 		elif self.cur2balamount > self.buybal2:
 			amount = self.cur2balamount - self.buybal2
-			sell_exchange.send_tx(self.cur2, amount, buy_exchange.wallet[self.cur2]["address"], buy_exchange.wallet[self.cur2]["memo"])
+			self.cur2wd = self.sell_exchange.send_tx(self.cur2, amount, buy_exchange.wallet[self.cur2]["address"], buy_exchange.wallet[self.cur2].get("memo"))
+
+		with open("transactions.txt", "a") as text_file:
+			text_file.write("{0},{1},{2}\n".format(datetime.datetime.now(), self.cur1wd, self.cur2wd))
 
 	def rebalance_complete(self):
-		sellbal1 = sell_exchange.get_balance(self.cur1)
-		buybal1 = buy_exchange.get_balance(self.cur1)
-		sellbal2 = sell_exchange.get_balance(self.cur2)
-		buybal2 = buy_exchange.get_balance(self.cur2)
+		sellbal1 = self.sell_exchange.get_balance(self.cur1)
+		buybal1 = self.buy_exchange.get_balance(self.cur1)
+		sellbal2 = self.sell_exchange.get_balance(self.cur2)
+		buybal2 = self.buy_exchange.get_balance(self.cur2)
 
 		if max(sellbal1, buybal1) < max(self.sellbal1, self.buybal1) and max(sellbal2, buybal2) < max(self.sellbal2, self.buybal2):
 			return True
 		return False
 
 	def execution_complete(self):
-		sell_trade_complete = sell_exchange.order_complete(self.sell_order_id)
-		buy_trade_complete = buy_exchange.order_complete(self.buy_order_id)
-		if sell_trade_complete is True and buy_trade_complete is True:
-			return True
-		else:
-			return False
+		sell_trade_complete = self.sell_exchange.order_complete(self.sell_order_id)
+		if sell_trade_complete is True:
+			buy_trade_complete = self.buy_exchange.order_complete(self.buy_order_id)
+			if buy_trade_complete is True:
+				return True
+		return False
 
