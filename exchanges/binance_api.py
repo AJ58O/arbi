@@ -1,4 +1,5 @@
 import os
+import json
 import requests
 import hmac
 import hashlib
@@ -174,7 +175,6 @@ class binance_api:
 	def getOpenOrders(self, symbol=None, recvWindow=None):
 		#gets open orders
 		timestamp=self.getTimestamp()
-		print(timestamp)
 		message = "timestamp={}".format(timestamp)
 		params={
 			"timestamp":timestamp
@@ -314,7 +314,14 @@ class binance_api:
 			return True
 		return False
 
-	
+	def get_open_orders(self, market):
+		print(self.normalize_pair(market))
+		return self.getOpenOrders(symbol=self.normalize_pair(market))
+
+	def cancel(self, symbol, orderId):
+		return self.cancelOrder(self.normalize_pair(symbol), orderId=orderId)
+
 
 # b = binance_api(os.environ["BINANCE_KEY"], os.environ["BINANCE_SECRET"])
-# print(b.get_buy_price("XRPBTC"))
+# # print(b.getOrderStatus("XRPUSDT", "50371232"
+# print(json.dumps(b.getAllOrders("XRPUSDT", limit=4)))

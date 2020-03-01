@@ -29,5 +29,10 @@ class Exchange:
 		return float(self.e.get_balance(currency))
 
 	def order_complete(self, orderId, market):
-		return self.e.order_complete(orderId, market)
+		return bool(self.e.order_complete(orderId, market))
 
+	def get_open_orders(self, market):
+		return self.e.get_open_orders(market)
+
+	def cancel(self, market, orderId):
+		return self.e.cancel(market, orderId)

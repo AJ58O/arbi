@@ -1,4 +1,5 @@
 import os
+import json
 from kucoin.client import Client
 
 class kucoin_api:
@@ -22,6 +23,7 @@ class kucoin_api:
 			return buy["orderId"]
 		except:
 			print("except")
+			print(buy)
 			return buy
 
 
@@ -36,6 +38,7 @@ class kucoin_api:
 			return sell["orderId"]
 		except:
 			print("except")
+			print(sell)
 			return sell
 
 	def send_tx(self, currency, quantity, address, memo):
@@ -77,10 +80,20 @@ class kucoin_api:
 		trade = [account for account in cur_accounts if account["type"] == "trade"][0]
 		return self.client.create_inner_transfer(main["id"], trade["id"], amount)		
 
+	def get_orders(self, symbol=None, status=None, side=None):
+		return self.client.get_orders(symbol=symbol, status=status, side=side)
+
+	def get_open_orders(self, symbol):
+		return self.get_orders(symbol=symbol, status="active")
+
+	def cancel(self, symbol, orderId):
+		return self.client.cancel_order(orderId)
 
 
 # k = kucoin_api(os.environ["KUCOIN_KEY"], os.environ["KUCOIN_SECRET"], os.environ["KUCOIN_PASSPHRASE"])
 # market = "XRP-USDT"
+
+# print(json.dumps(k.get_orders(symbol=market, side="buy")))
 
 
 # # print(k.buy("XRP-USDT", 5, .25))

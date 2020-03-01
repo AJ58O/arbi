@@ -35,8 +35,8 @@ class arbitrage:
 		self.ex1bal2 = self.exchange1.get_balance(self.cur2)
 		self.ex2bal1 = self.exchange2.get_balance(self.cur1)
 		self.ex2bal2 = self.exchange2.get_balance(self.cur2)
-		self.amount1 = self.ex1bal2 * 100
-		self.amount2 = self.ex2bal1 * 100
+		self.amount1 = self.ex1bal2
+		self.amount2 = self.ex2bal1
 
 	def get_opportunity(self, r=None):
 		if self.price1 == None:

@@ -95,6 +95,8 @@ class bittrex_api:
 		return r.json()
 
 	def get_open_orders(self, market):
+		market = self.normalize_pair(market)
+		print(market)
 		params = {
 			"market":market,
 			"nonce":str(time.time()).split(".")[0],
@@ -137,7 +139,7 @@ class bittrex_api:
 			return "0"
 		return r.json()["result"]["Balance"]
 
-	def cancel(self, uuid):
+	def cancel(self, symbol, uuid):
 		params = {
 			"uuid":uuid,
 			"nonce":str(time.time()).split(".")[0],
@@ -170,6 +172,7 @@ class bittrex_api:
 			return r["result"]["uuid"]
 		except:
 			print("except")
+			print(r)
 			return r
 
 	def buy(self, market, quantity, rate, order_type=None, addtl_params={}):
@@ -192,13 +195,14 @@ class bittrex_api:
 			return resp["result"]["uuid"]
 		except:
 			print("except")
+			print(resp)
 			return resp
 
-	def order_complete(self, market, orderId):
-		if int(self.get_order(orderId)["result"][0]["QuantityRemaining"]) == 0:
-			return True
-		return False
+	def order_complete(self, orderId, market):
+		print(orderId)
+		print(self.get_order(orderId))
+		return not bool(self.get_order(orderId)["result"]["IsOpen"])
+
 		
 # b = bittrex_api(os.environ["BITTREX_SECRET"], os.environ["BITTREX_KEY"])
-# print(b.buy("XRP-USDT", 10, .25))
-# print(b.sell("XRP-USDT", 10, .35))
+# print(b.order_complete("XRP-USDT", "bae21960-8bf2-4f20-a443-02e7028bf053"))
