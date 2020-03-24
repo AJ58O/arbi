@@ -35,19 +35,18 @@ except Exception as e:
 # e_list = [kucoin, binance, bittrex, bitrue, coinbase]
 # e_name_list = ["kucoin", "binance", "bittrex", "bitrue", "coinbase"]
 
-e_list = [kucoin, binance, bittrex]
-e_name_list = ["kucoin", "binance", "bittrex"]
+e_list = [binance]
+e_name_list = ["binance"]
 
 
-for order in kucoin.get_open_orders("XRP-USDT")["items"]:
-	print(kucoin.cancel("XRP-USDT",order["id"]))
-
+# for order in kucoin.get_open_orders("XRP-USDT")["items"]:
+# 	print(kucoin.cancel("XRP-USDT",order["id"]))
 for order in binance.get_open_orders("XRP-USDT"):
 	print(binance.cancel("XRP-USDT",order["orderId"]))
-for order in bittrex.get_open_orders("XRP-USDT")["result"]:
-	print(order)
-	print("cancelling right now")
-	print(bittrex.cancel("XRP-USDT",order["OrderUuid"]))
+# for order in bittrex.get_open_orders("XRP-USDT")["result"]:
+# 	print(order)
+# 	print("cancelling right now")
+# 	print(bittrex.cancel("XRP-USDT",order["OrderUuid"]))
 
 
 # trade_list = {
@@ -79,24 +78,32 @@ for order in bittrex.get_open_orders("XRP-USDT")["result"]:
 
 
 
-# # print("getting buy prices")
-# # for i in range(len(e_list)):
-# # 	try:
-# # 		print(f"getting buy price for {e_name_list[i]}")
-# # 		print(e_list[i].get_buy_price("XRP-BTC"))
-# # 	except Exception as e:
-# # 		print(e)
+print("getting buy prices")
+for i in range(len(e_list)):
+	try:
+		print(f"getting buy price for {e_name_list[i]}")
+		print(e_list[i].get_buy_price("XRP-USDT"))
+	except Exception as e:
+		print(e)
 
-# # print("getting sell prices")
-# # for i in range(len(e_list)):
-# # 	try:
-# # 		print(f"getting sell price for {e_name_list[i]}")
-# # 		print(e_list[i].get_sell_price("XRP-USDT"))
-# # 	except Exception as e:
-# # 		print(e)
+print("getting sell prices")
+for i in range(len(e_list)):
+	try:
+		print(f"getting sell price for {e_name_list[i]}")
+		print(e_list[i].get_sell_price("XRP-USDT"))
+	except Exception as e:
+		print(e)
+
+print("getting open orders")
+for i in range(len(e_list)):
+	try:
+		print(f"getting open orders for {e_name_list[i]}")
+		print(e_list[i].get_open_orders("XRP-USDT"))
+	except Exception as e:
+		print(e)
 # # print("showing wallet")
-# # for i in range(len(e_list)):
-# # 	try:
+# for i in range(len(e_list)):
+# 	try:
 # # 		print(f"wallet for {e_name_list[i]}")
 # # 		print(e_list[i].wallet)
 # # 	except Exception as e:
@@ -117,45 +124,45 @@ for i in range(len(e_list)):
 	except Exception as e:
 		print(e)
 
-# print("making buy orders")
+# # print("making buy orders")
 # for i in range(len(e_list)):
 # 	try:
 # 		print(f"placing buy for {e_name_list[i]}")
-# 		print(e_list[i].buy("XRP-USDT", 60, .24))
+# 		print(e_list[i].buy("XRP-USDT", 555, .236))
+# 	except Exception as e:
+# # 		print(e)
+
+# print("making sell orders")
+# for i in range(len(e_list)):
+# 	try:
+# 		print(f"placing sell for {e_name_list[i]}")
+# 		print(e_list[i].sell("XRP-USDT", 90, .155))
 # 	except Exception as e:
 # 		print(e)
 
-# # print("making sell orders")
-# # for i in range(len(e_list)):
-# # 	try:
-# # 		print(f"placing sell for {e_name_list[i]}")
-# # 		print(e_list[i].sell("XRP-USDT", 250, .2656))
-# # 	except Exception as e:
-# # 		print(e)
 
 
+# print("order completes")
+# for i in range(len(e_list)):
+# 	try:
+# 		print(f"order complete for {e_name_list[i]}")
+# 		print(e_list[i].order_complete("488933603", "XRP-USD"))
+# 	except Exception as e:
+# 		print(e)
 
-# # print("order completes")
-# # for i in range(len(e_list)):
-# # 	try:
-# # 		print(f"order complete for {e_name_list[i]}")
-# # 		print(e_list[i].order_complete("234", "XRP-USD"))
-# # 	except Exception as e:
-# # 		print(e)
-
-# # print("send txns")
-# # for i in range(len(e_list)):
-# # 	try:
-# # 		print(f"sending tx from {e_name_list[i]}")
-# # 		print(binance.wallet["USDT"]["address"])
-# # 		print(e_list[i].send_tx("USDT", 5, binance.wallet["USDT"]["address"]))
-# # 	except Exception as e:
-# # 		print(e)
-
-# # for i in range(len(e_list)):
-# # 	try:
-# # 		# print(kucoin.e.client.create_deposit_address("USDT", chain="TRC20"))
-# # 		print(e_list[i].send_tx("XRP", 21, bittrex.wallet["XRP"]["address"], memo=bittrex.wallet["XRP"]["memo"]))
-# # 	except Exception as e:
-# # 		print(e)
+# print("send txns")
+# for i in range(len(e_list)):
+# 	try:
+# 		print(f"sending tx from {e_name_list[i]}")
+# 		print(binance.wallet["USDT"]["address"])
+# 		print(e_list[i].send_tx("USDT", 5, binance.wallet["USDT"]["address"]))
+# 	except Exception as e:
+# 		print(e)
+# # print(binance.wallet)
+# for i in range(len(e_list)):
+# 	try:
+# 		# print(kucoin.e.client.create_deposit_address("USDT", chain="TRC20"))
+# 		print(e_list[i].send_tx("XRP", 555, binance.wallet["XRP"]["address"], memo=binance.wallet["XRP"]["memo"]))
+# 	except Exception as e:
+# 		print(e)
 

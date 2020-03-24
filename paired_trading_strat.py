@@ -3,7 +3,7 @@ from exchanges.exchange_class import Exchange
 from arb import arbitrage
 from os import environ
 from time import sleep
-from trade_client import trade_client
+from paired_trade_client import paired_trade_client
 import datetime
 import traceback
 
@@ -23,10 +23,10 @@ def main():
 	# pair2="XRP-USDT"
 	# pair3="XRP-USDT"
 	# amountList = [50, 100, 300, 1000]
-	threshhold = .008
+	threshhold = .15
 	trade_amount = .99
 
-	exchanges = [bitt, bina, kuco]
+	exchanges = [bina]
 	active_trade_obj = {}
 	with open("trade_log.txt", "a") as text_file:
 		text_file.write(f"ts,exchange,pair,buy amount,buy price,sell amount,sell price,buy,sell,init_buy_bal,init_sell_bal,final_sell_bal,final_buy_bal\n")
@@ -34,7 +34,7 @@ def main():
 	trade_list = []		
 	for exchange in exchanges:
 		try:
-			trade = trade_client(exchange, pair, threshhold, trade_amount, run_trade=True)			
+			trade = paired_trade_client(exchange, pair, threshhold, trade_amount, run_trade=True)			
 			trade_list.append(trade)
 			active_trade_obj[exchange.name] = {}
 			active_trade_obj[exchange.name]["TradeActive"] = True
@@ -58,7 +58,7 @@ def main():
 			if active_trade_obj[key]["TradeActive"] == False:
 				exchange = [e for e in exchanges if e.name == key][0]
 				try:
-					trade = trade_client(exchange, pair, threshhold, trade_amount, run_trade=True)
+					trade = paired_trade_client(exchange, pair, threshhold, trade_amount, run_trade=True)
 					trade_list.append(trade)
 					active_trade_obj[exchange.name]["TradeActive"] = True
 					active_trade_obj[exchange.name]["buy"] = trade.buy

@@ -36,3 +36,9 @@ class Exchange:
 
 	def cancel(self, market, orderId):
 		return self.e.cancel(market, orderId)
+
+	def stop_buy(self, market, amount, price, stop_limit):
+		return self.e.stop_buy(market, amount, price, stop_limit)
+
+	def stop_sell(self, market, amount, price, stop_limit):
+		return self.e.stop_sell(market, amount, price, stop_limit)

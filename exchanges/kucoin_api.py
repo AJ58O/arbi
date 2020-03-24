@@ -26,6 +26,19 @@ class kucoin_api:
 			print(buy)
 			return buy
 
+	def stop_buy(self, market, amount, price, stop_price):
+		currency = market.split("-")[1]
+		balance = self.get_withdraw_balance(currency)
+		if float(balance) > 0:
+			move = self.move_from_withdraw_to_trade(currency, balance)
+		buy = self.client.create_limit_order(market, Client.SIDE_BUY, price, amount, stop="entry", stop_price=stop_price)
+		try:
+			return buy["orderId"]
+		except:
+			print("except")
+			print(buy)
+			return buy
+
 
 	def sell(self, market, amount, price, order_type=None, addtl_params={}):
 		currency = market.split("-")[0]
@@ -34,6 +47,20 @@ class kucoin_api:
 			move = self.move_from_withdraw_to_trade(currency, balance)
 			print(move)
 		sell = self.client.create_limit_order(market, Client.SIDE_SELL, price, amount)
+		try:
+			return sell["orderId"]
+		except:
+			print("except")
+			print(sell)
+			return sell
+
+	def stop_sell(self, market, amount, price, stop_price):
+		currency = market.split("-")[0]
+		balance = self.get_withdraw_balance(currency)
+		if float(balance) > 0:
+			move = self.move_from_withdraw_to_trade(currency, balance)
+			print(move)
+		sell = self.client.create_limit_order(market, Client.SIDE_SELL, price, amount, stop="loss", stop_price=stop_price)
 		try:
 			return sell["orderId"]
 		except:

@@ -123,6 +123,7 @@ class bitrue_api:
 		return requests.post(f"{self.baseURL}{self.orderURL}", headers={"X-MBX-APIKEY":self.key}, data=data).json()
 		
 
+
 	def getOrderStatus(self, symbol, orderId=None, origClientId=None, recvWindow=None):
 		timestamp=self.getTimestamp()
 		#returns an order status

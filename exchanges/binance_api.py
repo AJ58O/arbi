@@ -293,6 +293,20 @@ class binance_api:
 		except:
 			return order
 
+	def stop_buy(self, market, amount, price, stop_limit):
+		order = self.newOrder(self.normalize_pair(market), "BUY", "TAKE_PROFIT_LIMIT", amount, price=price, stopPrice=stop_limit, live=True)["orderId"]
+		try:
+			return order["orderId"]
+		except:
+			return order
+
+	def stop_sell(self, market, amount, price, stop_limit):
+		order = self.newOrder(self.normalize_pair(market), "SELL", "STOP_LIMIT", amount, price=price, stopPrice=stop_limit, live=True)["orderId"]
+		try:
+			return order["orderId"]
+		except:
+			return order
+
 	def sell(self, market, amount, price, order_type=None, addtl_params=None):
 		order = self.newOrder(self.normalize_pair(market), "SELL", "LIMIT", amount, timeInForce="GTC", live=True, price=price)
 		try:
@@ -310,8 +324,11 @@ class binance_api:
 			return self.withdraw(currency, address, quantity, memo=memo)
 
 	def order_complete(self, orderId, market):
-		if self.getOrderStatus(self.normalize_pair(market), orderId=orderId)["status"] == "FILLED":
-			return True
+		try:
+			if self.getOrderStatus(self.normalize_pair(market), orderId=orderId)["status"] == "FILLED":
+				return True
+		except:
+			print(self.getOrderStatus(self.normalize_pair(market), orderId=orderId))
 		return False
 
 	def get_open_orders(self, market):

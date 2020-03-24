@@ -62,7 +62,7 @@ class bittrex_api:
 		except:
 			return self.get_order_book(self.normalize_pair(market), "sell")
 
-	def send_tx(self, currency, quantity, address, paymentid=None):
+	def send_tx(self, currency, quantity, address, memo=None):
 		params = {
 			"currency":currency,
 			"quantity":quantity,
@@ -70,8 +70,8 @@ class bittrex_api:
 			"nonce":str(time.time()).split(".")[0],
 			"apikey":self.key
 		}
-		if paymentid is not None:
-			params["paymentid"] = paymentid,
+		if memo != None:
+			params["paymentid"] = memo
 		url = self.base + "/account/withdraw"+self.pathstring(params)
 		headers = {
 			"apisign":self.sign(url),
