@@ -1,4 +1,5 @@
 import os
+import json
 import requests
 import hmac
 import hashlib
@@ -29,11 +30,15 @@ class binance_api:
 		self.accountInfoURL="/api/v3/account"
 		self.accountTradesURL="/api/v3/myTrades"
 		self.withdrawURL="/wapi/v3/withdraw.html"
+		self.fees = .0025
 
 	def getSignature(self, message):
 		#returns a signature
-		dig = hmac.new(self.secret, msg=message, digestmod=hashlib.sha256).hexdigest()
-		return dig
+		dig = hmac.new(self.secret, msg=message, digestmod=hashlib.sha256)
+		return dig.hexdigest()
+
+	def normalize_pair(self, pair):
+		return pair.replace("-","")
 
 	def is_connected(self):
 		#returns true if status=200, otherwise false
@@ -85,8 +90,9 @@ class binance_api:
 	def newOrder(self, symbol, side, orderType, quantity, timeInForce=None, price=None, newClientOrderId=None, stopPrice=None, newOrderRespType=None, recvWindow=None, live=False):
 		timestamp=self.getTimestamp()
 		#submits a new order
+		orderURL = self.orderURL
 		if live != True:
-			orderURL = testNewOrderURL
+			orderURL = self.testNewOrderURL
 		data = {
 				"symbol":symbol, 
 				"side":side, 
@@ -116,7 +122,7 @@ class binance_api:
 		signature = self.getSignature(message.encode('utf-8'))
 		data['signature']=signature
 		
-		return requests.post(f"{self.baseURL}{self.orderURL}", headers={"X-MBX-APIKEY":self.key}, data=data).json()
+		return requests.post(f"{self.baseURL}{orderURL}", headers={"X-MBX-APIKEY":self.key}, data=data).json()
 		
 
 	def getOrderStatus(self, symbol, orderId=None, origClientId=None, recvWindow=None):
@@ -169,7 +175,6 @@ class binance_api:
 	def getOpenOrders(self, symbol=None, recvWindow=None):
 		#gets open orders
 		timestamp=self.getTimestamp()
-		print(timestamp)
 		message = "timestamp={}".format(timestamp)
 		params={
 			"timestamp":timestamp
@@ -243,7 +248,7 @@ class binance_api:
 		params['signature']=signature
 		return requests.get(f"{self.baseURL}{self.accountTradesURL}", headers={"X-MBX-APIKEY":self.key}, params=params).json()
 
-	def withdraw(self, asset, address, amount, network=None, memo=None, name=None, recvWindow=None):
+	def withdraw(self, asset, address, amount, network=None, memo=None, name=None, recvWindow=None, chain=None):
 		timestamp=self.getTimestamp()
 		#gets account trades
 		message="asset={0}&address={1}&amount={2}&timestamp={3}".format(asset, address, amount, timestamp)
@@ -260,11 +265,15 @@ class binance_api:
 			params['name']=name
 			message+="&name={}".format(name)
 		if memo:
-			params['memo']=memo
-			message+="&memo={}".format(memo)
+			params['addressTag']=memo
+			message+="&addressTag={}".format(memo)
 		if network:
 			params['network']=network
-			message+="&network={}".format(network)			
+			message+="&network={}".format(network)
+		if chain:
+			params['chain']=chain
+			message+="&chain={}".format(chain)
+		print(params)			
 		signature = self.getSignature(message.encode('utf-8'))
 		params['signature']=signature
 		return requests.post(f"{self.baseURL}{self.withdrawURL}", headers={"X-MBX-APIKEY":self.key}, params=params).json()
@@ -272,27 +281,64 @@ class binance_api:
 	##Exchange class functions
 
 	def get_buy_price(self, market):
-		return self.getBookTicker(market)["bidPrice"]
+		return self.getBookTicker(self.normalize_pair(market))["bidPrice"]
 
 	def get_sell_price(self, market):
-		return self.getBookTicker(market)["askPrice"]
+		return self.getBookTicker(self.normalize_pair(market))["askPrice"]
 
 	def buy(self, market, amount, price, order_type=None, addtl_params=None):
-		return self.newOrder(market, "BUY", "LIMIT", amount, live=True, price=price)
+		order = self.newOrder(self.normalize_pair(market), "BUY", "LIMIT", amount, timeInForce="GTC", live=True, price=price)
+		try:
+			return order["orderId"]
+		except:
+			return order
+
+	def stop_buy(self, market, amount, price, stop_limit):
+		order = self.newOrder(self.normalize_pair(market), "BUY", "TAKE_PROFIT_LIMIT", amount, price=price, stopPrice=stop_limit, live=True)["orderId"]
+		try:
+			return order["orderId"]
+		except:
+			return order
+
+	def stop_sell(self, market, amount, price, stop_limit):
+		order = self.newOrder(self.normalize_pair(market), "SELL", "STOP_LIMIT", amount, price=price, stopPrice=stop_limit, live=True)["orderId"]
+		try:
+			return order["orderId"]
+		except:
+			return order
 
 	def sell(self, market, amount, price, order_type=None, addtl_params=None):
-		return self.newOrder(market, "SELL", "LIMIT", amount, price=price)
+		order = self.newOrder(self.normalize_pair(market), "SELL", "LIMIT", amount, timeInForce="GTC", live=True, price=price)
+		try:
+			return order["orderId"]
+		except:
+			return order
 
 	def get_balance(self, currency):
 		return [x["free"] for x in self.getAccountInfo()['balances'] if x["asset"] == currency][0]
 
 	def send_tx(self, currency, quantity, address, memo):
-		return self.withdraw(currency, address, quantity, memo=memo)
+		if currency == "USDT":
+			return self.withdraw(currency, address, quantity)
+		else:
+			return self.withdraw(currency, address, quantity, memo=memo)
 
 	def order_complete(self, orderId, market):
-		return self.getOrderStatus(market, orderId=orderId)
+		try:
+			if self.getOrderStatus(self.normalize_pair(market), orderId=orderId)["status"] == "FILLED":
+				return True
+		except:
+			print(self.getOrderStatus(self.normalize_pair(market), orderId=orderId))
+		return False
 
-	
+	def get_open_orders(self, market):
+		print(self.normalize_pair(market))
+		return self.getOpenOrders(symbol=self.normalize_pair(market))
 
-b = binance_api(os.environ["BINANCE_KEY"], os.environ["BINANCE_SECRET"])
-print(b.get_balance("XRP"))
+	def cancel(self, symbol, orderId):
+		return self.cancelOrder(self.normalize_pair(symbol), orderId=orderId)
+
+
+# b = binance_api(os.environ["BINANCE_KEY"], os.environ["BINANCE_SECRET"])
+# # print(b.getOrderStatus("XRPUSDT", "50371232"
+# print(json.dumps(b.getAllOrders("XRPUSDT", limit=4)))

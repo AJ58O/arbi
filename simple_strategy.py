@@ -1,5 +1,5 @@
-from exchanges import bittrex_api
-from exchanges import coinbase_api
+from exchanges import binance_api
+from exchanges import kucoin_api
 from exchanges.exchange_class import Exchange
 from arb import arbitrage
 import os
@@ -9,13 +9,12 @@ import time
 
 
 def main():
-	bittrex = bittrex_api.Bittrex(os.environ["BITTREX_SECRET"], os.environ["BITTREX_KEY"])
-	coinbase = coinbase_api.CB(os.environ["CB_SECRET"], os.environ["CB_KEY"], os.environ["CB_PASSPHRASE"])
-	exchange1 = Exchange("bittrex", bittrex)
-	exchange2 = Exchange("coinbase", coinbase)
-	pair1="BTC-XRP"
-	pair2="XRP-BTC"
-	amountList = [50, 100, 300, 1000]
+	binance = binance_api.bittrex_api(os.environ["BINANCE_SECRET"], os.environ["BINANCE_KEY"])
+	kucoin = kucoin_api.kucoin_api(os.environ["KUCOIN_KEY"], os.environ["KUCOIN_SECRET"], os.environ["KUCOIN_PASSPHRASE"])
+	exchange1 = Exchange("binance", binance)
+	exchange2 = Exchange("kucoin", kucoin)
+	pair1="XRP-USDT"
+	pair2="XRP-USDT"
 	threshhold = .01
 
 	#init headers
@@ -25,24 +24,29 @@ def main():
 	while True:
 		price1 = exchange1.get_buy_price(pair1)
 		price2 = exchange2.get_sell_price(pair2)
-		amount1 = amountList[random.randrange(len(amountList))]
-		amount2 = amountList[random.randrange(len(amountList))]
+		# amount1 = amountList[random.randrange(len(amountList))]
+		# amount2 = amountList[random.randrange(len(amountList))]
+		rebalance = True
 
 
-		a = arbitrage(exchange1, exchange2, pair1, pair2, amount1, amount2, price1, price2, threshhold=threshhold)
+		a = arbitrage(exchange1, exchange2, pair1, pair2, amount1, amount2, price1, price2, threshhold=threshhold, get_amounts=True)
 		sell_exchange_name, priceDiff, margin = a.get_opportunity(r=1)
 
 		if sell_exchange_name != exchange2.name:
-			a = arbitrage(exchange2, exchange1, pair2, pair1, amount2, amount1, threshhold=threshhold, run_op=True)
-		# if a.do_trade == True:
-		# 	a.execute()
-		# 	a.rebalance()
-		# 	while a.rebalance_complete() is not True:
-		# 		time.sleep(5)
-
-		# 500 * x = margin
-
+			a = arbitrage(exchange2, exchange1, pair2, pair1, amount2, amount1, threshhold=threshhold, run_op=True, get_amounts=True)
+		if a.do_trade == True:
+			print("executing")
+			a.execute()
+			while a.execution_complete() is not True:
+				print("waiting for trades to complete")
+				time.sleep(5)
+			if rebalance == True:
+				print("rebalancing")
+				a.rebalance()
+				while a.rebalance_complete() is not True:
+					print("waiting for rebalance to complete")
+					time.sleep(5)
+			break
 		time.sleep(5)
-
 
 main()
