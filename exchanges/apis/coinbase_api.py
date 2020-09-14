@@ -4,7 +4,7 @@ import requests
 import json
 import time
 import base64
-from exchanges import cbauth
+from exchanges.apis import cbauth
 # import cbauth
 import os
 
