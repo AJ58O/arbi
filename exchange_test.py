@@ -41,8 +41,8 @@ e_name_list = ["binance"]
 
 # for order in kucoin.get_open_orders("XRP-USDT")["items"]:
 # 	print(kucoin.cancel("XRP-USDT",order["id"]))
-for order in binance.get_open_orders("XRP-USDT"):
-	print(binance.cancel("XRP-USDT",order["orderId"]))
+# for order in binance.get_open_orders("XRP-USDT"):
+# 	print(binance.cancel("XRP-USDT",order["orderId"]))
 # for order in bittrex.get_open_orders("XRP-USDT")["result"]:
 # 	print(order)
 # 	print("cancelling right now")
