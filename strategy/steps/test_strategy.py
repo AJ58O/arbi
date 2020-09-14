@@ -1,10 +1,9 @@
-from exchanges import binance_api
+from exchanges.apis import binance_api
 from exchanges.exchange_class import Exchange
-from arb import arbitrage
 from os import environ
 from time import sleep
-from paired_trade_client import paired_trade_client
-from stop_client import StopClient
+from strategy.clients.paired_trade_client import paired_trade_client
+from strategy.clients.stop_client import StopClient
 import datetime
 import traceback
 import sys
