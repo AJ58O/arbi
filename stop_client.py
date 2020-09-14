@@ -1,3 +1,5 @@
+import statistics
+
 class StopClient:
 	def __init__(self, exchange, pair, threshhold, trade_amount, starting_price=None, run_trade=False, regen=False, log_suffix=""):
 		self.exchange = exchange
@@ -7,7 +9,12 @@ class StopClient:
 		self.trade_amount = trade_amount
 		self.sell_cur = self.pair.split("-")[0]
 		self.buy_cur = self.pair.split("-")[1]
-		self.starting_price = starting_price if starting_price != None else mean([self.exchange.get_buy_price(self.pair),self.exchange.get_sell_price(self.pair)])
+		self.cur_trade_price = None
+		self.cur_avg_price = None
+		self.trade = None
+		self.active_trade_type = None
+		self.starting_price = starting_price if starting_price != None else statistics.mean([self.exchange.get_buy_price(self.pair),self.exchange.get_sell_price(self.pair)])
+		self.trade_active = False
 
 	def should_move(self, price1, price2, threshhold, method):
 		if method == "sell":
@@ -30,7 +37,7 @@ class StopClient:
 		return self.exchange.stop_sell(market, amount, price, stop_limit)
 
 	def move_order(self, market, amount, price, stop_limit, method, order_id=None):
-		if order_id != None:
+		if order_id is not None:
 			self.exchange.cancel(market, order_id)
 		if method.lower() == "sell":
 			return self.stop_sell(market, amount, price, stop_limit)
@@ -45,10 +52,30 @@ class StopClient:
 		return False
 
 
-	def init_trade(self):
-		avg_price = mean([self.exchange.get_buy_price(self.pair),self.exchange.get_sell_price(self.pair)])
-		if  self.should_move(avg_price, self.starting_price, self.threshhold, "sell"):
-			return "sell"
-		elif self.should_move(avg_price, self.starting_price, self.threshhold, "buy"):
-			return "buy"
+	def do_trade(self):
+		self.cur_avg_price = statistics.mean([self.exchange.get_buy_price(self.pair),self.exchange.get_sell_price(self.pair)])
+		if self.trade_active == False:
+			if self.should_move(self.cur_avg_price, self.starting_price, self.threshhold, "sell"):
+				self.trade_active = True
+				self.active_trade_type = "sell"
+				self.cur_trade_price = self.cur_avg_price
+				self.trade = self.stop_sell(self.pair, self.trade_amount, self.cur_avg_price, self.get_new_limit_price(self.cur_avg_price, self.threshhold, self.active_trade_type))
+				return self.trade
+			elif self.should_move(self.cur_avg_price, self.starting_price, self.threshhold, "buy"):
+				self.trade_active = True
+				self.active_trade_type = "buy"
+				self.cur_trade_price = self.cur_avg_price
+				self.trade = self.stop_buy(self.pair, self.trade_amount, self.cur_avg_price, self.get_new_limit_price(self.cur_avg_price, self.threshhold, self.active_trade_type))
+				return self.trade
+		else:
+			cur_trade = self.eval_and_move(self.pair, self.trade_amount, self.cur_trade_price, self.active_trade_type, self.cur_avg_price, self.threshhold, self.trade)
+			if cur_trade:
+				self.trade = cur_trade
+				self.cur_trade_price = self.cur_avg_price
+				return self.trade
+		return False
+
+	def trade_complete(self):
+		if self.exchange.order_complete(self.trade, self.pair):
+			return True
 		return False

@@ -24,7 +24,6 @@ class paired_trade_client:
 			self.execute_trade()
 		print("trade initialized")
 
-
 	def get_amounts(self):
 		self.init_sell_bal, self.init_buy_bal = self.get_balances()
 		self.unbal_buy_amount = round(self.trade_amount * float(self.init_buy_bal), 1)
@@ -115,5 +114,22 @@ class paired_trade_client:
 			return True
 		return False
 
-	
+	def only_one_trade_complete(self):
+		self.buy_complete = self.exchange.order_complete(self.buy, self.pair) 
+		self.sell_complete = self.exchange.order_complete(self.sell, self.pair)
+		if (self.buy_complete and not self.sell_complete) or (self.sell_complete and not self.buy_complete):
+			return True
+		return False
+
+	def cancel_open_trade(self):
+		self.buy_complete = self.exchange.order_complete(self.buy, self.pair) 
+		self.sell_complete = self.exchange.order_complete(self.sell, self.pair)
+		order_to_cancel=None
+		if self.buy_complete and not self.sell_complete:
+			order_to_cancel = self.buy
+		elif self.sell_complete and not self.buy_complete:
+			order_to_cancel = self.sell
+		else:
+			return False
+		return self.exchange.cancel(self.pair, order_to_cancel)			
 
