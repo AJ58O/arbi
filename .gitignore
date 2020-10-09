@@ -1,4 +1,7 @@
 __pycache__/
 *.txt
 .DS_Store
+LOGS_*
+StrategyLogs_*
+BINANCE_LOGS*
 

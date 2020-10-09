@@ -5,12 +5,16 @@ import hmac
 import hashlib
 import base64
 import time
+from util.logger import logger
 
 ######API CALLS
 
+recvWindowDefault = 10000 #double binance's default to accommodate occassional latency.
+
 class binance_api:
 	def __init__(self, key, secret):
-		self.key = key
+		self.logger = logger("BINANCE_STATE", "BINANCE_LOGS.txt", "BINANCE_LOGS.txt")
+		self.key = key 
 		self.secret = secret.encode("utf-8")
 		self.baseURL = "https://api.binance.com"
 		self.pingURL = "/api/v1/ping"
@@ -85,9 +89,22 @@ class binance_api:
 
 	def getBookTicker(self, symbol=None):
 		#returns price/qty data
-		return requests.get(f"{self.baseURL}{self.bookTickerURL}", headers={"X-MBX-APIKEY":self.key},params={"symbol":symbol}).json()
+		response = requests.get(f"{self.baseURL}{self.bookTickerURL}", headers={"X-MBX-APIKEY":self.key},params={"symbol":symbol})
 
-	def newOrder(self, symbol, side, orderType, quantity, timeInForce=None, price=None, newClientOrderId=None, stopPrice=None, newOrderRespType=None, recvWindow=None, live=False):
+		tickerLog = json.dumps({
+			"symbol":symbol,
+			"response_content":response.content.decode("utf-8"),
+			"response_status_code":response.status_code
+		})
+		logMessage = f"Get Ticker: {tickerLog}"
+		if response.status_code > 299 or response.status_code < 200:
+			self.logger.log(logMessage, error=True)
+		else: 
+			self.logger.log(logMessage)
+
+		return response.json()
+
+	def newOrder(self, symbol, side, orderType, quantity, timeInForce=None, price=None, newClientOrderId=None, stopPrice=None, newOrderRespType=None, recvWindow=recvWindowDefault, live=False):
 		timestamp=self.getTimestamp()
 		#submits a new order
 		orderURL = self.orderURL
@@ -122,10 +139,34 @@ class binance_api:
 		signature = self.getSignature(message.encode('utf-8'))
 		data['signature']=signature
 		
-		return requests.post(f"{self.baseURL}{orderURL}", headers={"X-MBX-APIKEY":self.key}, data=data).json()
+		response = requests.post(f"{self.baseURL}{orderURL}", headers={"X-MBX-APIKEY":self.key}, data=data)
+
+		orderLog = json.dumps({
+				"symbol":symbol,
+				"side":side,
+				"orderType":orderType,
+				"quantity":quantity,
+				"timeInForce":timeInForce,
+				"price":price,
+				"newClientOrderId":newClientOrderId,
+				"stopPrice":stopPrice,
+				"newOrderRespType":newOrderRespType,
+				"recvWindow":recvWindow,
+				"live":live,
+				"response_content":response.content.decode("utf-8"),
+				"response_status_code":response.status_code
+		})
+		logMessage = f"New Order: {orderLog}"
+		if response.status_code > 299 or response.status_code < 200:
+			self.logger.log(logMessage, error=True)
+		else: 
+			self.logger.log(logMessage)
+
+		return response.json()
+		
 		
 
-	def getOrderStatus(self, symbol, orderId=None, origClientId=None, recvWindow=None):
+	def getOrderStatus(self, symbol, orderId=None, origClientId=None, recvWindow=recvWindowDefault):
 		timestamp=self.getTimestamp()
 		#returns an order status
 		message="symbol={0}&timestamp={1}".format(symbol, timestamp)
@@ -144,9 +185,25 @@ class binance_api:
 			message+="&recvWindow={}".format(recvWindow)
 		signature = self.getSignature(message.encode('utf-8'))
 		params['signature']=signature
-		return requests.get(f"{self.baseURL}{self.orderURL}", headers={"X-MBX-APIKEY":self.key}, params=params).json()
+		response = requests.get(f"{self.baseURL}{self.orderURL}", headers={"X-MBX-APIKEY":self.key}, params=params)
 
-	def cancelOrder(self, symbol, orderId=None, origClientId=None, newClientOrderId=None, recvWindow=None):
+		orderLog = json.dumps({
+			"symbol":symbol,
+			"orderId":orderId,
+			"origClientId":origClientId,
+			"recvWindow":recvWindow,
+			"response_content":response.content.decode("utf-8"),
+			"response_status_code":response.status_code
+		})
+		logMessage = f"Retreived Order Status: {orderLog}"
+		if response.status_code > 299 or response.status_code < 200:
+			self.logger.log(logMessage, error=True)
+		else: 
+			self.logger.log(logMessage)
+
+		return response.json()
+
+	def cancelOrder(self, symbol, orderId=None, origClientId=None, newClientOrderId=None, recvWindow=recvWindowDefault):
 		timestamp=self.getTimestamp()
 		#cancels an order
 		message="symbol={0}&timestamp={1}".format(symbol, timestamp)
@@ -170,9 +227,26 @@ class binance_api:
 		params['signature']=signature
 
 		keepPollingOrder = True
-		return requests.delete(f"{self.baseURL}{self.orderURL}",headers={"X-MBX-APIKEY":self.key}, params=params).json()
+		response = requests.delete(f"{self.baseURL}{self.orderURL}",headers={"X-MBX-APIKEY":self.key}, params=params)
 
-	def getOpenOrders(self, symbol=None, recvWindow=None):
+		orderLog = json.dumps({
+			"symbol":symbol,
+			"orderId":orderId,
+			"origClientId":origClientId,
+			"newClientOrderId":newClientOrderId,
+			"recvWindow":recvWindow,
+			"response_content":response.content.decode("utf-8"),
+			"response_status_code":response.status_code
+		})
+		logMessage = f"Cancelled Order: {orderLog}"
+		if response.status_code > 299 or response.status_code < 200:
+			self.logger.log(logMessage, error=True)
+		else: 
+			self.logger.log(logMessage)
+
+		return response.json()
+
+	def getOpenOrders(self, symbol=None, recvWindow=recvWindowDefault):
 		#gets open orders
 		timestamp=self.getTimestamp()
 		message = "timestamp={}".format(timestamp)
@@ -189,9 +263,24 @@ class binance_api:
 		params['signature']=signature
 
 		keepPollingOpenOrders = True
-		return requests.get(f"{self.baseURL}{self.openOrdersURL}", headers={"X-MBX-APIKEY":self.key}, params=params).json()
+		resopnse = requests.get(f"{self.baseURL}{self.openOrdersURL}", headers={"X-MBX-APIKEY":self.key}, params=params)
 
-	def getAllOrders(self, symbol, recvWindow=None, limit=None, orderId=None):
+		orderLog = json.dumps({
+			"symbol":symbol,
+			"recvWindow":recvWindow,
+			"response_content":response.content.decode("utf-8"),
+			"response_status_code":response.status_code
+		})
+		logMessage = f"Get Open Orders: {orderLog}"
+		if response.status_code > 299 or response.status_code < 200:
+			self.logger.log(logMessage, error=True)
+		else: 
+			self.logger.log(logMessage)
+
+		return response.json()
+
+
+	def getAllOrders(self, symbol, recvWindow=recvWindowDefault, limit=None, orderId=None):
 		timestamp=self.getTimestamp()
 		#returns all orders
 		message="symbol={0}&timestamp={1}".format(symbol, timestamp)
@@ -212,7 +301,7 @@ class binance_api:
 		params['signature']=signature
 		return requests.get(f"{self.baseURL}{self.allOrdersURL}", headers={"X-MBX-APIKEY":self.key}, params=params).json()
 
-	def getAccountInfo(self, recvWindow=None):
+	def getAccountInfo(self, recvWindow=recvWindowDefault):
 		timestamp=self.getTimestamp()
 		#gets account info
 		message="timestamp={}".format(timestamp)
@@ -224,10 +313,21 @@ class binance_api:
 			message+="&recvWindow={}".format(recvWindow)
 		signature = self.getSignature(message.encode('utf-8'))
 		params['signature']=signature
-		return requests.get(f"{self.baseURL}{self.accountInfoURL}", headers={"X-MBX-APIKEY":self.key}, params=params).json()
+		response = requests.get(f"{self.baseURL}{self.accountInfoURL}", headers={"X-MBX-APIKEY":self.key}, params=params)
+
+		# paramLog = json.dumps({
+		# 	"recvWindow":recvWindow,
+		# 	"response_content":response.content.decode("utf-8"),
+		# 	"response_status_code":response.status_code
+		# })
+		# logMessage = f"Get Account Info: {paramLog}"
+		if response.status_code > 299 or response.status_code < 200:
+			self.logger.log(logMessage, error=True)
+
+		return response.json()
 		
 
-	def getTrades(self, symbol, limit=None, fromId=None, recvWindow=None):
+	def getTrades(self, symbol, limit=None, fromId=None, recvWindow=recvWindowDefault):
 		timestamp=self.getTimestamp()
 		#gets account trades
 		message="symbol={0}&timestamp={1}".format(symbol, timestamp)
@@ -248,7 +348,7 @@ class binance_api:
 		params['signature']=signature
 		return requests.get(f"{self.baseURL}{self.accountTradesURL}", headers={"X-MBX-APIKEY":self.key}, params=params).json()
 
-	def withdraw(self, asset, address, amount, network=None, memo=None, name=None, recvWindow=None, chain=None):
+	def withdraw(self, asset, address, amount, network=None, memo=None, name=None, recvWindow=recvWindowDefault, chain=None):
 		timestamp=self.getTimestamp()
 		#gets account trades
 		message="asset={0}&address={1}&amount={2}&timestamp={3}".format(asset, address, amount, timestamp)
