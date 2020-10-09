@@ -28,6 +28,11 @@ Strategy executor should process events from a queue and should use a recvWindow
 
 # Running:
 
+Currently the only exchange I'm utilizing is Binance. Every exchange has different auth heuristics. For running the strategy as it exists now, make sure you export the following env vars:
+
+1. `BINANCE_KEY`
+2. `BINANCE_SECRET`
+
 Right now I'm still working on refactoring, so currently you run this from the project dir like this `python3 -m strategy.steps.test_strategy`
 
 # Explanation of strategies:
